@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("EMPLOYEE") // ROLES: EMPLOYEE, REVIEWER, PM, ADMIN, SUPER_ADMIN
+  department String?
+  ideas     Idea[]
+  comments  Comment[]
+  reviews   Review[]
+  statusHistory IdeaStatusHistory[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Idea {
+  id                String               @id @default(uuid())
+  title             String
+  problemStatement  String
+  currentWorkaround String?
+  proposedSolution  String
+  category          String
+  beneficiaries     String // JSON string or comma separated
+  expectedImpact    String // JSON string or comma separated
+  exampleScenario   String
+  priority          String
+  status            String               @default("SUBMITTED")
+  ownerId           String
+  owner             User                 @relation(fields: [ownerId], references: [id])
+  comments          Comment[]
+  statusHistory     IdeaStatusHistory[]
+  reviews           Review[]
+  scores            Score?
+  attachments       Attachment[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+}
+
+model IdeaStatusHistory {
+  id        String   @id @default(uuid())
+  ideaId    String
+  idea      Idea     @relation(fields: [ideaId], references: [id])
+  status    String
+  changedBy String
+  changedByUser User   @relation(fields: [changedBy], references: [id])
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  ideaId    String
+  idea      Idea     @relation(fields: [ideaId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  parentId  String?
+  parent    Comment? @relation("Thread", fields: [parentId], references: [id])
+  replies   Comment[] @relation("Thread")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  ideaId     String
+  idea       Idea     @relation(fields: [ideaId], references: [id])
+  reviewerId String
+  reviewer   User     @relation(fields: [reviewerId], references: [id])
+  action     String // SHORTLISTED, REJECTED, INFO_REQUESTED
+  content    String?
+  createdAt  DateTime @default(now())
+}
+
+model Score {
+  id               String @id @default(uuid())
+  ideaId           String @unique
+  idea             Idea   @relation(fields: [ideaId], references: [id])
+  businessImpact   Int    // 1-5
+  customerValue    Int    // 1-5
+  techEffort       Int    // 1-5
+  revenuePotential Int    // 1-5
+  finalScore       Float
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  url       String
+  ideaId    String
+  idea      Idea     @relation(fields: [ideaId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  points      Int
+  createdAt   DateTime @default(now())
+}
