@@ -22,6 +22,11 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="QuickReply Innovation Portal API")
 
+@app.on_event("startup")
+async def startup_event():
+    print("Backend is starting up and connecting to Supabase...")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
