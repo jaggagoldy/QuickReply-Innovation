@@ -41,7 +41,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 # Pydantic Schemas
 class UserBase(BaseModel):
     email: EmailStr
-    name: String
+    name: str
     department: Optional[str] = None
 
 class UserCreate(UserBase):
@@ -288,7 +288,15 @@ def review_idea(idea_id: str, review_in: ReviewCreate, db: Session = Depends(get
 def get_users(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     if current_user.role != "SUPER_ADMIN":
         raise HTTPException(status_code=403, detail="Not authorized")
-    return db.query(models.User).all()
+    users = db.query(models.User).all()
+    return [{
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "role": user.role,
+        "department": user.department,
+        "createdAt": user.createdAt
+    } for user in users]
 
 @app.patch("/api/users/{user_id}/role")
 def update_user_role(user_id: str, role_data: dict = Body(...), db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
